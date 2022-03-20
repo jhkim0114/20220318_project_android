@@ -7,25 +7,26 @@ import timber.log.Timber
 
 abstract class BaseDataSource {
 
-    fun <T> getResult(
+    protected fun <T> apiRequest(
         call: Call<T>,
-        callBack: (T) -> Unit
+        result: (T) -> Unit
     ) {
         call.enqueue(object : Callback<T> {
-
             override fun onResponse(call: Call<T>, response: Response<T>) {
-
-                if (response.isSuccessful) {
-
-
+                try {
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        if (body != null) return result(body)
+                    }
+                    Timber.d("network error")
+                } catch (e: Exception) {
+                    Timber.d(e.message)
                 }
-
             }
 
             override fun onFailure(call: Call<T>, t: Throwable) {
-                TODO("Not yet implemented")
+                Timber.d(t.message)
             }
-
         })
     }
 
@@ -47,9 +48,5 @@ abstract class BaseDataSource {
 //        Timber.d(message)
 //        return Resource.error(message)
 //    }
-
-
-
-
 
 }

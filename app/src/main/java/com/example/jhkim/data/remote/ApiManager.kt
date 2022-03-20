@@ -25,9 +25,9 @@ object ApiManager {
     }
 
     fun getVclipData() {
-        apiRequest<List<Vclip>>(
-            getService().getVclip("축구")
-        )
+//        apiRequest<List<Vclip>>(
+//            getService().getVclip("축구")
+//        )
     }
 
     fun getService(): ThumbnailService {

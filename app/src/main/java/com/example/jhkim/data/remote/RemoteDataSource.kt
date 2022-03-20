@@ -1,16 +1,23 @@
 package com.example.jhkim.data.remote
 
+import com.example.jhkim.data.entities.Image
 import com.example.jhkim.data.entities.Meta
+import com.example.jhkim.data.entities.ResponseData
+import com.example.jhkim.data.entities.Vclip
 import com.google.gson.annotations.SerializedName
 import javax.inject.Inject
-
-data class ResponseData<T>(@SerializedName("documents") val documents: T, @SerializedName("meta") val meta: Meta)
 
 class RemoteDataSource @Inject constructor(
     private val thumbnailService: ThumbnailService
 ) : BaseDataSource() {
 
-    fun getSearchData(text: String) = thumbnailService.getImage(text, "recency")
+    fun getImageData(text: String, page: Int, result: ((ResponseData<List<Image>>)->Unit)) = apiRequest (
+        thumbnailService.getImage(text, "recency", page), result
+    )
+
+    fun getVclipData(text: String, page: Int, result: ((ResponseData<List<Vclip>>)->Unit)) = apiRequest (
+        thumbnailService.getVclip(text, "recency", page), result
+    )
 
 //    fun getSearchData(text: String) {
 //        thumbnailService.getImage(text)

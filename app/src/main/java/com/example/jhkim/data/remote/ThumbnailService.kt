@@ -1,6 +1,7 @@
 package com.example.jhkim.data.remote
 
 import com.example.jhkim.data.entities.Image
+import com.example.jhkim.data.entities.ResponseData
 import com.example.jhkim.data.entities.Vclip
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Call
@@ -22,8 +23,9 @@ interface ThumbnailService {
 //    fun getImage(@Query("query") query: String): Call<ApiManager.ResponseData<Flow<List<Image>>>>
 
     @GET("v2/search/image")
-    fun getImage(@Query("query") query: String, @Query("sort") sort: String): Call<ResponseData<List<Image>>>
+    fun getImage(@Query("query") query: String, @Query("sort") sort: String, @Query("page") page: Int): Call<ResponseData<List<Image>>>
 
     @GET("v2/search/vclip")
-    fun getVclip(@Query("query") query: String): Call<ApiManager.ResponseData<List<Vclip>>>
+    fun getVclip(@Query("query") query: String, @Query("sort") sort: String, @Query("page") page: Int): Call<ResponseData<List<Vclip>>>
+
 }

@@ -6,12 +6,12 @@ import java.util.*
 
 @Entity
 data class Keyword(
-    val text: String,
-    val image_is_end: Boolean,
-    val vclip_is_end: Boolean,
-    val image_page: Int,
-    val vclip_page: Int,
-    val search_date: Long = Calendar.getInstance().timeInMillis
+    var text: String = "",
+    var image_is_end: Boolean = false,
+    var vclip_is_end: Boolean = false,
+    var image_page: Int = 1,
+    var vclip_page: Int = 1,
+    var search_date: Long = Calendar.getInstance().timeInMillis
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0

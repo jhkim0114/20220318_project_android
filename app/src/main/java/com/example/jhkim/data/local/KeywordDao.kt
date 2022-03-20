@@ -15,13 +15,22 @@ interface KeywordDao {
     suspend fun deleteKeywordList(idList: List<Long>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertKeyword(entity: Keyword): Long
+    suspend fun insertKeyword(keyword: Keyword): Long
+
+    @Update
+    suspend fun updateKeyword(keyword: Keyword)
 
     @Query("SELECT * FROM keyword WHERE search_date + :timeout < :now ")
     suspend fun seleteKeywordTimeout(now: Long, timeout: Long): List<Keyword>
 
     @Query("SELECT * FROM keyword WHERE text = :text")
-    suspend fun seleteKeyword(text: String): Keyword
+    suspend fun seleteKeyword(text: String): Keyword?
+
+    @Query("SELECT * FROM keyword ORDER BY search_date DESC")
+    fun seleteFlowKeyword(): Flow<Keyword>
+
+    @Query("UPDATE keyword SET search_date = :now WHERE text = :text")
+    suspend fun updateKeywordSearchDate(now: Long, text: String)
 
 
 }
