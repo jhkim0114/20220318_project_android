@@ -28,10 +28,8 @@ class SearchViewModel @Inject constructor(
     private val timeout = 1000L * 60L * 5L  // 5분
 //    private val timeout = 1000L * 1L
 
-    var usePage = true
-
-    private lateinit var thumbnailJob: Job
-    private lateinit var keywordJob: Job
+    private var thumbnailJob: Job? = null
+    private var keywordJob: Job? = null
     private val dataTimeoutJob = suspend {
         repository.seleteKeywordTimeout(timeout).let { data ->
             val idList = mutableListOf<Long>()
@@ -86,13 +84,11 @@ class SearchViewModel @Inject constructor(
                 viewModelScope.launch {
                     dataTimeoutJob()
 
-                    if (!::keywordJob.isInitialized) {
-                        keywordJob = viewModelScope.launch {
-                            repository.seleteFlowKeyword().collect { data ->
-                                data?.let {
-                                    Timber.d("keywordJob 키워드 변경: $data")
-                                    _keyword.value = data
-                                }
+                    keywordJob = viewModelScope.launch {
+                        repository.seleteFlowKeyword().collect { data ->
+                            data?.let {
+                                Timber.d("keywordJob 키워드 변경: $data")
+                                _keyword.value = data
                             }
                         }
                     }
@@ -113,11 +109,11 @@ class SearchViewModel @Inject constructor(
                         )
                         repository.seleteKeyword(text)?.let {
                             getImageData(it)
-//                            getVclipData(it)
+                            getVclipData(it)
                         }
                     }
 
-                    if (::thumbnailJob.isInitialized) thumbnailJob.cancel()
+                    thumbnailJob?.cancel()
                     thumbnailJob = viewModelScope.launch {
                         repository.seleteFlowThumbnailList(text).collect { thumbnails ->
                             _items.value = thumbnails
@@ -131,7 +127,7 @@ class SearchViewModel @Inject constructor(
                 Timber.d("다음 페이지 요청: $text")
                 viewModelScope.launch {
                     getImageData(keyword.value, isPaging)
-//                    getVclipData(keyword.value, isPaging)
+                    getVclipData(keyword.value, isPaging)
                 }
             }
             else -> {

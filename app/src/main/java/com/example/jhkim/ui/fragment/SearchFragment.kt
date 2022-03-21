@@ -50,7 +50,8 @@ class SearchFragment : Fragment() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (viewModel.items.value.isNotEmpty() && !recyclerView.canScrollVertically(RecyclerView.FOCUS_DOWN)) {
-                    if (!viewModel.usePage) return
+//                    Timber.d("addOnScrollListener: scrollToPosition(0)")
+//                    binding.recyclerViewSearch.scrollToPosition(0)
                     Timber.d("addOnScrollListener: dx: $dx, dy: $dy")
                     viewModel.getSearchData(isPaging = true)
                 }
@@ -59,14 +60,12 @@ class SearchFragment : Fragment() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 Timber.d("addOnScrollListener newState: $newState")
-                viewModel.usePage = true
             }
         })
 
         binding.editTextSearch.setText("구름")
         binding.buttonSearch.setOnClickListener {
             if (binding.editTextSearch.text.toString().isNotBlank()) {
-                viewModel.usePage = false
                 viewModel.getSearchData(binding.editTextSearch.text.toString())
                 hideKeyboard(requireActivity())
             }
