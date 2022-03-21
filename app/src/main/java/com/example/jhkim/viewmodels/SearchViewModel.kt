@@ -28,6 +28,8 @@ class SearchViewModel @Inject constructor(
     private val timeout = 1000L * 60L * 5L  // 5분
 //    private val timeout = 1000L * 1L
 
+    var usePage = true
+
     private lateinit var thumbnailJob: Job
     private lateinit var keywordJob: Job
     private val dataTimeoutJob = suspend {
@@ -40,7 +42,8 @@ class SearchViewModel @Inject constructor(
                 Timber.d("dataTimeoutJob 타임아웃 삭제 키워드: ${keyword.text}")
             }
             repository.deleteKeywordList(idList)
-            repository.deleteThumbnailList(textList)
+            repository.deleteThumbnailIsLikeFalseList(textList)
+            repository.updateThumbnailITextIsLikeTrue("", textList)
         }
     }
 
@@ -110,13 +113,13 @@ class SearchViewModel @Inject constructor(
                         )
                         repository.seleteKeyword(text)?.let {
                             getImageData(it)
-                            getVclipData(it)
+//                            getVclipData(it)
                         }
                     }
 
                     if (::thumbnailJob.isInitialized) thumbnailJob.cancel()
                     thumbnailJob = viewModelScope.launch {
-                        repository.getLocalSearchData(text).collect { thumbnails ->
+                        repository.seleteFlowThumbnailList(text).collect { thumbnails ->
                             _items.value = thumbnails
                             Timber.d("썸네일 flow keyword: $text")
                             Timber.d("썸네일 flow item count: ${_items.value.size}")
@@ -128,7 +131,7 @@ class SearchViewModel @Inject constructor(
                 Timber.d("다음 페이지 요청: $text")
                 viewModelScope.launch {
                     getImageData(keyword.value, isPaging)
-                    getVclipData(keyword.value, isPaging)
+//                    getVclipData(keyword.value, isPaging)
                 }
             }
             else -> {
@@ -166,7 +169,7 @@ class SearchViewModel @Inject constructor(
                 viewModelScope.launch {
                     Timber.d("getImageData 키워드 업데이트: ${updateKeyword}")
                     repository.updateKeywordImage(updateKeyword)
-                    repository.addLocalSearchData(thumbnailList)
+                    repository.insertThumbnailList(thumbnailList)
                 }
             }
         }
@@ -201,7 +204,7 @@ class SearchViewModel @Inject constructor(
                 viewModelScope.launch {
                     Timber.d("getVclipData 키워드 업데이트: ${updateKeyword}")
                     repository.updateKeywordVclip(updateKeyword)
-                    repository.addLocalSearchData(thumbnailList)
+                    repository.insertThumbnailList(thumbnailList)
                 }
             }
         }
