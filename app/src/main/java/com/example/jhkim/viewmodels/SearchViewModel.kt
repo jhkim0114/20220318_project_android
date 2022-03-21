@@ -1,5 +1,6 @@
 package com.example.jhkim.viewmodels
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jhkim.data.entities.Keyword
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -50,13 +52,19 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    fun onClickButtonLike(thumbnail: Thumbnail) {
+        viewModelScope.launch {
+            Timber.d(thumbnail.id.toString())
+            Timber.d(thumbnail.thumbnail_url)
+            repository.updateThumbnailIsLike(thumbnail)
+        }
+    }
+
     fun getSearchData(text: String = "", isPaging: Boolean = false) {
         Timber.d("getSearchData input text: $text")
         Timber.d("getSearchData keyword text: ${keyword.value.text}")
         Timber.d("getSearchData isPaging: $isPaging")
 
-
-        var str = "2022-03-05T11:00:09.000+09:00"
 
         // 검색 버튼이면? 5분 지난 데이터 삭제
         // keyword 테이블에 검색 키워드 있는지 조회
@@ -64,7 +72,6 @@ class SearchViewModel @Inject constructor(
         // 로컬에 없으면 네트워크 데이터 담기
         // 스크롤 페이징 추가시 키워드 is_end, page, use_date 업데이트
         // is_end false면 스크롤 안됨
-
 
         // 키워드가 같을때 버튼이면 리턴
         // 키워드가 같을때 페이징이면 네트워크 데이터 추가
@@ -103,10 +110,10 @@ class SearchViewModel @Inject constructor(
                                 text = text,
                             )
                         )
-                        val keyword = repository.seleteKeyword(text)
-
-                        getImageData(keyword!!)
-                        getVclipData(keyword!!)
+                        repository.seleteKeyword(text)?.let {
+                            getImageData(it)
+                            getVclipData(it)
+                        }
                     }
 
                     if (::thumbnailJob.isInitialized) thumbnailJob.cancel()
@@ -135,11 +142,12 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    val imageMaxPage = 50
     private suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
         Timber.d("getImageData 네트워크 이미지 데이터 호출")
-        Timber.d("getImageData 호출 페이지 is_end: ${keyword.image_is_end}")
-        if (!keyword.image_is_end) {
-            val addPage = if (isPaging) 1 else 0
+        val addPage = if (isPaging) 1 else 0
+        Timber.d("getImageData 호출 페이지 is_end: ${keyword.image_is_end} page: ${keyword.image_page + addPage}")
+        if (!keyword.image_is_end && keyword.image_page + addPage <= imageMaxPage) {
             Timber.d("getImageData 호출 페이지: ${keyword.image_page + addPage}")
             repository.getImageData(keyword.text, keyword.image_page + addPage) { data ->
                 var thumbnailList: MutableList<Thumbnail> = mutableListOf()
@@ -147,9 +155,8 @@ class SearchViewModel @Inject constructor(
                     Thumbnail(
                         type = "image",
                         text = "${keyword.text}",
-                        is_view = true,
                         thumbnail_url = image.thumbnail_url,
-                        datetime = image.datetime,
+                        datetime = stringToDate(image.datetime),
                     ).also {
                         thumbnailList.add(it)
                     }
@@ -170,11 +177,12 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    val vclipMaxPage = 15
     private suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
         Timber.d("getVclipData 네트워크 동영상 데이터 호출")
-        Timber.d("getVclipData 호출 페이지 is_end: ${keyword.vclip_is_end}")
-        if (!keyword.vclip_is_end) {
-            val addPage = if (isPaging) 1 else 0
+        val addPage = if (isPaging) 1 else 0
+        Timber.d("getVclipData 호출 페이지 is_end: ${keyword.vclip_is_end} page: ${keyword.vclip_page + addPage}")
+        if (!keyword.vclip_is_end && keyword.vclip_page + addPage <= vclipMaxPage) {
             Timber.d("getVclipData 호출 페이지: ${keyword.vclip_page + addPage}")
             repository.getVclipData(keyword.text, keyword.vclip_page + addPage) { data ->
                 var thumbnailList: MutableList<Thumbnail> = mutableListOf()
@@ -182,9 +190,8 @@ class SearchViewModel @Inject constructor(
                     Thumbnail(
                         type = "vclip",
                         text = "${keyword.text}",
-                        is_view = true,
                         thumbnail_url = vclip.thumbnail,
-                        datetime = vclip.datetime,
+                        datetime = stringToDate(vclip.datetime),
                     ).also {
                         thumbnailList.add(it)
                     }
@@ -204,5 +211,13 @@ class SearchViewModel @Inject constructor(
             }
         }
     }
+
+
+    fun stringToDate(str: String): Long {
+        var datetime = str.substring(0,10) + " " + str.substring(11, 19)
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        return format.parse(datetime).time
+    }
+
 
 }

@@ -10,16 +10,18 @@ import coil.transform.CircleCropTransformation
 import com.example.jhkim.R
 import com.example.jhkim.data.entities.Thumbnail
 import com.example.jhkim.databinding.ItemThumbnailBinding
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SearchAdapter(
-
+    private val onClickButtonLike: (Thumbnail) -> Unit
 ) : ListAdapter<Thumbnail, SearchAdapter.ThumbnailViewHolder>(ThumbnailDiffUtilCallback()) {
 
     private lateinit var binding: ItemThumbnailBinding
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbnailViewHolder {
         binding = ItemThumbnailBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ThumbnailViewHolder(binding)
+        return ThumbnailViewHolder(binding, onClickButtonLike)
     }
 
     override fun onBindViewHolder(holder: ThumbnailViewHolder, position: Int) {
@@ -27,7 +29,8 @@ class SearchAdapter(
     }
 
     class ThumbnailViewHolder(
-        private val binding: ItemThumbnailBinding
+        private val binding: ItemThumbnailBinding,
+        private val onClickButtonLike: (Thumbnail) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(thumbnail: Thumbnail) {
@@ -35,12 +38,20 @@ class SearchAdapter(
                 crossfade(true)
             }
 
-            binding.textViewDatetime.text = thumbnail.type + " " + thumbnail.datetime
+            binding.textViewDatetime.text = thumbnail.type + " " + dateToString(thumbnail.datetime)
             when (thumbnail.is_like) {
                 true -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_24)
                 false -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_border_24)
             }
+            binding.buttonLike.setOnClickListener {
+                onClickButtonLike(thumbnail)
+            }
 
+        }
+
+        fun dateToString(date: Long): String {
+            val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            return format.format(date)
         }
 
     }

@@ -8,10 +8,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ThumbnailDao {
 
-    @Query("SELECT * FROM thumbnail WHERE is_view = 1")
-    fun seleteThumbnailData(): Flow<List<Thumbnail>>
-
-    @Query("SELECT * FROM thumbnail WHERE text = :text")
+    @Query("SELECT * FROM thumbnail WHERE text = :text ORDER BY datetime DESC")
     fun seleteThumbnailData(text: String): Flow<List<Thumbnail>>
 
     @Query("SELECT * FROM thumbnail WHERE is_like = 1")
@@ -20,14 +17,8 @@ interface ThumbnailDao {
     @Query("DELETE FROM thumbnail WHERE text in (:textList)")
     suspend fun deleteThumbnailList(textList: List<String>)
 
-    @Query("UPDATE thumbnail SET is_view = 1 WHERE text = :text")
-    suspend fun updateThumbnailIsViewTrue(text: String)
-
-    @Query("UPDATE thumbnail SET is_view = 0 WHERE is_view = 1")
-    suspend fun updateThumbnailIsViewFalse()
-
-
-
+    @Query("UPDATE thumbnail SET is_like = :isLike WHERE id = :id")
+    suspend fun updateThumbnailIsLike(id: Long, isLike: Boolean)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: List<Thumbnail>)

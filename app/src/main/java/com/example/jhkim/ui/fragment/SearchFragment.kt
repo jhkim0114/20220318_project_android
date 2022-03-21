@@ -17,6 +17,8 @@ import com.example.jhkim.databinding.FragmentSearchBinding
 import com.example.jhkim.viewmodels.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import okhttp3.internal.notify
+import okhttp3.internal.notifyAll
 import timber.log.Timber
 
 
@@ -38,7 +40,9 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val searchAdapter = SearchAdapter()
+        val searchAdapter = SearchAdapter {
+            viewModel.onClickButtonLike(it)
+        }
         binding.recyclerViewSearch.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewSearch.adapter = searchAdapter
         binding.recyclerViewSearch.addOnScrollListener(object : RecyclerView.OnScrollListener(){
@@ -48,10 +52,6 @@ class SearchFragment : Fragment() {
                     Timber.d("onScrollStateChanged: Last Postion")
                     viewModel.getSearchData(isPaging = true)
                 }
-            }
-
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
             }
         })
 
@@ -66,6 +66,8 @@ class SearchFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.items.collect {
                     searchAdapter.submitList(it)
+                    searchAdapter.notifyDataSetChanged()
+                    Timber.d("viewModel.items 데이터 변경")
                 }
             }
         }

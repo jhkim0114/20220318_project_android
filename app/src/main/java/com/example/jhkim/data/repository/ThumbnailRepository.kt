@@ -87,16 +87,6 @@ class ThumbnailRepository @Inject constructor(
         return localDataSource.thumbnailDao().seleteThumbnailData(text)
     }
 
-    // 로컬 썸네일 is_view true 업데이트
-    suspend fun updateThumbnailIsViewTrue(text: String) {
-        return localDataSource.thumbnailDao().updateThumbnailIsViewTrue(text)
-    }
-
-    // 로컬 썸네일 is_view false 업데이트
-    suspend fun updateThumbnailIsViewFalse() {
-        return localDataSource.thumbnailDao().updateThumbnailIsViewFalse()
-    }
-
     // 로컬 키워드 마지막 검색시간 업데이트
     suspend fun updateKeywordUseDate(text: String) {
         val now = Calendar.getInstance().timeInMillis
@@ -106,6 +96,11 @@ class ThumbnailRepository @Inject constructor(
     // 로컬 썸네일 데이터 저장
     suspend fun addLocalSearchData(data: List<Thumbnail>) {
         localDataSource.thumbnailDao().insert(data)
+    }
+
+    suspend fun updateThumbnailIsLike(thumbnail: Thumbnail) {
+        val isLike = !thumbnail.is_like
+        localDataSource.thumbnailDao().updateThumbnailIsLike(thumbnail.id, isLike)
     }
 
 

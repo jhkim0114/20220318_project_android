@@ -8,9 +8,8 @@ import java.util.*
 data class Thumbnail(
     val type: String,
     val text: String,
-    val is_view: Boolean = false,
     val thumbnail_url: String,
-    val datetime: String,
+    val datetime: Long,
     val is_like: Boolean = false,
     val like_date: Long = 0
 ) {
