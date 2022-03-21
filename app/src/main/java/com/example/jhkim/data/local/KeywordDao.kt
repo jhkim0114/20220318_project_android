@@ -20,6 +20,12 @@ interface KeywordDao {
     @Update
     suspend fun updateKeyword(keyword: Keyword)
 
+    @Query("UPDATE keyword SET image_is_end = :imageIsEnd, image_page = :imagePage, search_date = :now WHERE text = :text")
+    suspend fun updateKeywordImage(text: String, imageIsEnd: Boolean, imagePage: Int, now: Long)
+
+    @Query("UPDATE keyword SET vclip_is_end = :vclipIsEnd, vclip_page = :vclipPage, search_date = :now WHERE text = :text")
+    suspend fun updateKeywordVclip(text: String, vclipIsEnd: Boolean, vclipPage: Int, now: Long)
+
     @Query("SELECT * FROM keyword WHERE search_date + :timeout < :now ")
     suspend fun seleteKeywordTimeout(now: Long, timeout: Long): List<Keyword>
 

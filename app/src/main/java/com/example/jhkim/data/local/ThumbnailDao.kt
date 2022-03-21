@@ -11,6 +11,9 @@ interface ThumbnailDao {
     @Query("SELECT * FROM thumbnail WHERE is_view = 1")
     fun seleteThumbnailData(): Flow<List<Thumbnail>>
 
+    @Query("SELECT * FROM thumbnail WHERE text = :text")
+    fun seleteThumbnailData(text: String): Flow<List<Thumbnail>>
+
     @Query("SELECT * FROM thumbnail WHERE is_like = 1")
     fun getLikeData(): Flow<List<Thumbnail>>
 

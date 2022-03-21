@@ -6,6 +6,7 @@ import com.example.jhkim.data.entities.Keyword
 import com.example.jhkim.data.entities.Thumbnail
 import com.example.jhkim.data.repository.ThumbnailRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,46 +22,40 @@ class SearchViewModel @Inject constructor(
     private val _items = MutableStateFlow<List<Thumbnail>>(emptyList())
     val items: StateFlow<List<Thumbnail>> = _items
 
-    private val _keyword = MutableStateFlow(Keyword())
-    private var keyword: StateFlow<Keyword> = _keyword
+    private val keyword = MutableStateFlow(Keyword())
+//    private var keyword: StateFlow<Keyword> = _keyword
 
     private val timeout = 1000L * 60L * 5L  // 5분
 //    private val timeout = 1000L * 1L
 
+    private lateinit var thumbnailJob: Job
+    private lateinit var keywordJob: Job
+    private val dataTimeoutJob = suspend {
+        repository.seleteKeywordTimeout(timeout).let { data ->
+            val idList = mutableListOf<Long>()
+            val textList = mutableListOf<String>()
+            data.forEach { keyword ->
+                idList.add(keyword.id)
+                textList.add(keyword.text)
+                Timber.d("dataTimeoutJob 타임아웃 삭제 키워드: ${keyword.text}")
+            }
+            repository.deleteKeywordList(idList)
+            repository.deleteThumbnailList(textList)
+        }
+    }
+
     init {
         viewModelScope.launch {
-            // 5분 지난 데이터 삭제
-            repository.seleteKeywordTimeout(timeout).let { data ->
-                val idList = mutableListOf<Long>()
-                val textList = mutableListOf<String>()
-                data.forEach { keyword ->
-                    idList.add(keyword.id)
-                    textList.add(keyword.text)
-                    Timber.d(keyword.text)
-                }
-                repository.deleteKeywordList(idList)
-                repository.deleteThumbnailList(textList)
-            }
-
-            // 키워드 데이터 조회
-            repository.seleteFlowKeyword().collect { data ->
-                data?.let {
-                    _keyword.value = data
-                } ?: run {
-                    _keyword.value = Keyword()
-                }
-            }
-
-            // 썸네일 데이터 조회
-            repository.getLocalSearchData().collect { thumbnails ->
-                _items.value = thumbnails
-                Timber.d("item count: ${_items.value.size}")
-            }
+            dataTimeoutJob()
         }
     }
 
     fun getSearchData(text: String = "", isPaging: Boolean = false) {
-        Timber.d("getSearchData text: $text")
+        Timber.d("getSearchData input text: $text")
+        Timber.d("getSearchData keyword text: ${keyword.value.text}")
+        Timber.d("getSearchData isPaging: $isPaging")
+
+
         var str = "2022-03-05T11:00:09.000+09:00"
 
         // 검색 버튼이면? 5분 지난 데이터 삭제
@@ -70,18 +65,6 @@ class SearchViewModel @Inject constructor(
         // 스크롤 페이징 추가시 키워드 is_end, page, use_date 업데이트
         // is_end false면 스크롤 안됨
 
-        viewModelScope.launch {
-            repository.seleteKeywordTimeout(timeout).let { data ->
-                val idList = mutableListOf<Long>()
-                val textList = mutableListOf<String>()
-                data.forEach { keyword ->
-                    idList.add(keyword.id)
-                    textList.add(keyword.text)
-                }
-                repository.deleteKeywordList(idList)
-                repository.deleteThumbnailList(textList)
-            }
-        }
 
         // 키워드가 같을때 버튼이면 리턴
         // 키워드가 같을때 페이징이면 네트워크 데이터 추가
@@ -91,19 +74,27 @@ class SearchViewModel @Inject constructor(
 
         when {
             keyword.value.text != text && !isPaging -> {
+                Timber.d("키워드 검색 요청: $text")
                 viewModelScope.launch {
-                    // 키워드가 다르면 일단 isView 다 끄고 시작
-                    repository.updateThumbnailIsViewFalse()
+                    dataTimeoutJob()
+
+                    if (!::keywordJob.isInitialized) {
+                        keywordJob = viewModelScope.launch {
+                            repository.seleteFlowKeyword().collect { data ->
+                                data?.let {
+                                    Timber.d("keywordJob 키워드 변경: $data")
+                                    keyword.value = data
+                                }
+                            }
+                        }
+                    }
 
                     // 로컬에 있는지 조회
-                    val keyword = repository.seleteKeyword(text)
-                    keyword?.let {
+                    repository.seleteKeyword(text)?.let {
                         Timber.d("키워드가 로컬에 있음")
                         // 키워드 search_date 업데이트
-                        repository.updateKeywordUseDate(keyword.text)
+                        repository.updateKeywordUseDate(it.text)
 
-                        // 검색 키워드 썸네일 is_view true 업데이트
-                        repository.updateThumbnailIsViewTrue(keyword.text)
                     } ?: run {
                         Timber.d("키워드가 로컬에 없음")
                         // 키워드 데이터 추가
@@ -117,10 +108,23 @@ class SearchViewModel @Inject constructor(
                         getImageData(keyword!!)
                         getVclipData(keyword!!)
                     }
+
+                    if (::thumbnailJob.isInitialized) thumbnailJob.cancel()
+                    thumbnailJob = viewModelScope.launch {
+                        repository.getLocalSearchData(text).collect { thumbnails ->
+                            _items.value = thumbnails
+                            Timber.d("썸네일 flow keyword: $text")
+                            Timber.d("썸네일 flow item count: ${_items.value.size}")
+                        }
+                    }
                 }
             }
-            text == "" && isPaging -> {
+            isPaging -> {
+                Timber.d("다음 페이지 요청: $text")
                 viewModelScope.launch {
+//                    // 키워드 search_date 업데이트
+//                    repository.updateKeywordUseDate(keyword.value.text)
+
                     getImageData(keyword.value, isPaging)
                     getVclipData(keyword.value, isPaging)
                 }
@@ -131,10 +135,12 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
-        Timber.d("네트워크 이미지 데이터 호출")
+    private suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
+        Timber.d("getImageData 네트워크 이미지 데이터 호출")
+        Timber.d("getImageData 호출 페이지 is_end: ${keyword.image_is_end}")
         if (!keyword.image_is_end) {
             val addPage = if (isPaging) 1 else 0
+            Timber.d("getImageData 호출 페이지: ${keyword.image_page + addPage}")
             repository.getImageData(keyword.text, keyword.image_page + addPage) { data ->
                 var thumbnailList: MutableList<Thumbnail> = mutableListOf()
                 data.documents.forEach { image ->
@@ -148,26 +154,28 @@ class SearchViewModel @Inject constructor(
                         thumbnailList.add(it)
                     }
                 }
-                Timber.d("네트워크 이미지 데이터 카운트: ${thumbnailList.size}")
+                Timber.d("getImageData 네트워크 이미지 데이터 카운트: ${thumbnailList.size}")
 
                 val updateKeyword = keyword.copy(
                     image_page = keyword.image_page + addPage,
                     image_is_end = data.meta.is_end,
-                    search_date = Calendar.getInstance().timeInMillis
                 )
 
                 viewModelScope.launch {
-                    repository.updateKeyword(updateKeyword)
+                    Timber.d("getImageData 키워드 업데이트: ${updateKeyword}")
+                    repository.updateKeywordImage(updateKeyword)
                     repository.addLocalSearchData(thumbnailList)
                 }
             }
         }
     }
 
-    suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
-        Timber.d("네트워크 동영상 데이터 호출")
+    private suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
+        Timber.d("getVclipData 네트워크 동영상 데이터 호출")
+        Timber.d("getVclipData 호출 페이지 is_end: ${keyword.vclip_is_end}")
         if (!keyword.vclip_is_end) {
             val addPage = if (isPaging) 1 else 0
+            Timber.d("getVclipData 호출 페이지: ${keyword.vclip_page + addPage}")
             repository.getVclipData(keyword.text, keyword.vclip_page + addPage) { data ->
                 var thumbnailList: MutableList<Thumbnail> = mutableListOf()
                 data.documents.forEach { vclip ->
@@ -181,16 +189,16 @@ class SearchViewModel @Inject constructor(
                         thumbnailList.add(it)
                     }
                 }
-                Timber.d("네트워크 동영상 데이터 카운트: ${thumbnailList.size}")
+                Timber.d("getVclipData 네트워크 동영상 데이터 카운트: ${thumbnailList.size}")
 
                 val updateKeyword = keyword.copy(
-                    image_page = keyword.image_page + addPage,
-                    image_is_end = data.meta.is_end,
-                    search_date = Calendar.getInstance().timeInMillis
+                    vclip_page = keyword.vclip_page + addPage,
+                    vclip_is_end = data.meta.is_end,
                 )
 
                 viewModelScope.launch {
-                    repository.updateKeyword(updateKeyword)
+                    Timber.d("getVclipData 키워드 업데이트: ${updateKeyword}")
+                    repository.updateKeywordVclip(updateKeyword)
                     repository.addLocalSearchData(thumbnailList)
                 }
             }

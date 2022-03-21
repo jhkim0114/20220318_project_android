@@ -35,7 +35,7 @@ class SearchAdapter(
                 crossfade(true)
             }
 
-            binding.textViewDatetime.text = thumbnail.datetime
+            binding.textViewDatetime.text = thumbnail.type + " " + thumbnail.datetime
             when (thumbnail.is_like) {
                 true -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_24)
                 false -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_border_24)

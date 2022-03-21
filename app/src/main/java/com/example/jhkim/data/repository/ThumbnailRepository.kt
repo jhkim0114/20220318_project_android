@@ -50,6 +50,18 @@ class ThumbnailRepository @Inject constructor(
         return localDataSource.keywordDao().updateKeyword(keyword)
     }
 
+    // 로컬 키워드 데이터 업데이트
+    suspend fun updateKeywordImage(keyword: Keyword) {
+        val now = Calendar.getInstance().timeInMillis
+        return localDataSource.keywordDao().updateKeywordImage(keyword.text, keyword.image_is_end, keyword.image_page, now)
+    }
+
+    // 로컬 키워드 데이터 업데이트
+    suspend fun updateKeywordVclip(keyword: Keyword) {
+        val now = Calendar.getInstance().timeInMillis
+        return localDataSource.keywordDao().updateKeywordVclip(keyword.text, keyword.vclip_is_end, keyword.vclip_page, now)
+    }
+
     // 로컬 키워드 데이터 가져오기
     suspend fun seleteKeyword(text: String): Keyword? {
         return localDataSource.keywordDao().seleteKeyword(text)
@@ -71,8 +83,8 @@ class ThumbnailRepository @Inject constructor(
     }
 
     // 로컬 flow 썸네일 데이터 가져오기
-    fun getLocalSearchData(): Flow<List<Thumbnail>> {
-        return localDataSource.thumbnailDao().seleteThumbnailData()
+    fun getLocalSearchData(text: String): Flow<List<Thumbnail>> {
+        return localDataSource.thumbnailDao().seleteThumbnailData(text)
     }
 
     // 로컬 썸네일 is_view true 업데이트
