@@ -1,17 +1,14 @@
 package com.example.jhkim.adapter
 
-import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import coil.transform.CircleCropTransformation
 import com.example.jhkim.R
 import com.example.jhkim.data.entities.Thumbnail
 import com.example.jhkim.databinding.ItemThumbnailBinding
 import java.text.SimpleDateFormat
-import java.util.*
 
 class SearchAdapter(
     private val onClickButtonLike: (Thumbnail) -> Unit

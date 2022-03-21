@@ -11,8 +11,8 @@ interface ThumbnailDao {
     @Query("SELECT * FROM thumbnail WHERE text = :text ORDER BY datetime DESC")
     fun seleteThumbnailData(text: String): Flow<List<Thumbnail>>
 
-    @Query("SELECT * FROM thumbnail WHERE is_like = 1")
-    fun getLikeData(): Flow<List<Thumbnail>>
+    @Query("SELECT * FROM thumbnail WHERE is_like = 1 ORDER BY like_date DESC")
+    fun seleteThumbnailIsLikeData(): Flow<List<Thumbnail>>
 
     @Query("DELETE FROM thumbnail WHERE text in (:textList)")
     suspend fun deleteThumbnailList(textList: List<String>)

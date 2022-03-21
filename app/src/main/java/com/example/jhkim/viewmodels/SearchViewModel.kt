@@ -1,6 +1,5 @@
 package com.example.jhkim.viewmodels
 
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jhkim.data.entities.Keyword
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,8 +22,8 @@ class SearchViewModel @Inject constructor(
     private val _items = MutableStateFlow<List<Thumbnail>>(emptyList())
     val items: StateFlow<List<Thumbnail>> = _items
 
-    private val keyword = MutableStateFlow(Keyword())
-//    private var keyword: StateFlow<Keyword> = _keyword
+    private val _keyword = MutableStateFlow(Keyword())
+    val keyword: StateFlow<Keyword> = _keyword
 
     private val timeout = 1000L * 60L * 5L  // 5분
 //    private val timeout = 1000L * 1L
@@ -90,7 +88,7 @@ class SearchViewModel @Inject constructor(
                             repository.seleteFlowKeyword().collect { data ->
                                 data?.let {
                                     Timber.d("keywordJob 키워드 변경: $data")
-                                    keyword.value = data
+                                    _keyword.value = data
                                 }
                             }
                         }
@@ -129,9 +127,6 @@ class SearchViewModel @Inject constructor(
             isPaging -> {
                 Timber.d("다음 페이지 요청: $text")
                 viewModelScope.launch {
-//                    // 키워드 search_date 업데이트
-//                    repository.updateKeywordUseDate(keyword.value.text)
-
                     getImageData(keyword.value, isPaging)
                     getVclipData(keyword.value, isPaging)
                 }

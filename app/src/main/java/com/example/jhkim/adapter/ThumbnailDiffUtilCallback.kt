@@ -10,6 +10,6 @@ class ThumbnailDiffUtilCallback : DiffUtil.ItemCallback<Thumbnail>() {
     }
 
     override fun areContentsTheSame(oldItem: Thumbnail, newItem: Thumbnail): Boolean {
-        return oldItem.id == newItem.id
+        return oldItem.id == newItem.id && oldItem.is_like == newItem.is_like
     }
 }
