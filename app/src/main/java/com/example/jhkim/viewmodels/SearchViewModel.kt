@@ -82,9 +82,9 @@ class SearchViewModel @Inject constructor(
                     // 최근 검색인지 확인
                     repository.seleteKeyword(text)?.let {
                         Timber.d("최근 검색에 저장되어 있음")
+
                         // 키워드 search_date 업데이트
                         repository.updateKeywordUseDate(it.text)
-
                     } ?: run {
                         Timber.d("최근 검색에 저장되어 있지 않음")
                         // 키워드 데이터 추가
@@ -95,12 +95,13 @@ class SearchViewModel @Inject constructor(
                         }
                     }
 
-                    keywordJob?.cancel()
-                    keywordJob = viewModelScope.launch {
-                        repository.seleteFlowKeyword().collect { data ->
-                            data?.let {
-                                Timber.d("keywordJob 키워드 변경: $data")
-                                keyword.value = data
+                    keywordJob = keywordJob ?: run {
+                        viewModelScope.launch {
+                            repository.seleteFlowKeyword().collect { data ->
+                                data?.let {
+                                    Timber.d("keywordJob 키워드 변경: $data")
+                                    keyword.value = data
+                                }
                             }
                         }
                     }

@@ -16,7 +16,6 @@ import com.example.jhkim.viewmodels.StorageViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-
 @AndroidEntryPoint
 class StorageFragment : Fragment() {
     private val viewModel: StorageViewModel by viewModels()

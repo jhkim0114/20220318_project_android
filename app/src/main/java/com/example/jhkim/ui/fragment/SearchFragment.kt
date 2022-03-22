@@ -18,7 +18,6 @@ import com.example.jhkim.viewmodels.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-
 @AndroidEntryPoint
 class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
