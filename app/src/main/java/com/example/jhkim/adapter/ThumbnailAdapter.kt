@@ -8,11 +8,11 @@ import coil.load
 import com.example.jhkim.R
 import com.example.jhkim.data.entities.Thumbnail
 import com.example.jhkim.databinding.ItemThumbnailBinding
-import java.text.SimpleDateFormat
+import com.example.jhkim.util.Util.toStringTime
 
-class StorageAdapter(
+class ThumbnailAdapter(
     private val onClickButtonLike: (Thumbnail) -> Unit
-) : ListAdapter<Thumbnail, StorageAdapter.ThumbnailViewHolder>(ThumbnailDiffUtilCallback()) {
+) : ListAdapter<Thumbnail, ThumbnailAdapter.ThumbnailViewHolder>(ThumbnailDiffUtilCallback()) {
 
     private lateinit var binding: ItemThumbnailBinding
 
@@ -35,7 +35,7 @@ class StorageAdapter(
                 crossfade(true)
             }
 
-            binding.textViewDatetime.text = thumbnail.type + " " + dateToString(thumbnail.datetime)
+            binding.textViewDatetime.text = thumbnail.type + " " + thumbnail.datetime.toStringTime()
             when (thumbnail.is_like) {
                 true -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_24)
                 false -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_border_24)
@@ -43,11 +43,6 @@ class StorageAdapter(
             binding.buttonLike.setOnClickListener {
                 onClickButtonLike(thumbnail)
             }
-        }
-
-        fun dateToString(date: Long): String {
-            val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-            return format.format(date)
         }
 
     }

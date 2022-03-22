@@ -2,6 +2,7 @@ package com.example.jhkim.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.example.jhkim.adapter.ViewPagerAdapter
 import com.example.jhkim.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -32,4 +33,5 @@ class MainActivity : AppCompatActivity() {
             tab.text = tabTitleArray[position]
         }.attach()
     }
+
 }

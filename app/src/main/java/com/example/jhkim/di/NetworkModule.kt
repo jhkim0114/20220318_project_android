@@ -2,7 +2,6 @@ package com.example.jhkim.di
 
 import com.example.jhkim.data.remote.RemoteDataSource
 import com.example.jhkim.data.remote.ThumbnailService
-import com.example.jhkim.data.repository.ThumbnailRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,6 +17,9 @@ import javax.inject.Singleton
 @Module
 object NetworkModule {
 
+    private const val BASE_URL = "https://dapi.kakao.com/"
+    private const val AUTH_KEY = "KakaoAK 40edd132c9b358ea0da3c55f6ff40ae4"
+
     @Provides
     @Singleton
     fun provideHttpClient(): OkHttpClient {
@@ -26,7 +28,7 @@ object NetworkModule {
             .connectTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(10, TimeUnit.SECONDS)
             .addInterceptor { chain ->
-                val request: Request = chain.request().newBuilder().addHeader("Authorization", "KakaoAK 40edd132c9b358ea0da3c55f6ff40ae4").build()
+                val request: Request = chain.request().newBuilder().addHeader("Authorization", AUTH_KEY).build()
                 chain.proceed(request)
             }
             .build()
@@ -39,7 +41,7 @@ object NetworkModule {
         gsonConverterFactory: GsonConverterFactory
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://dapi.kakao.com/")
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(gsonConverterFactory)
             .build()

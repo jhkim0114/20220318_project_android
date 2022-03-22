@@ -10,7 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.jhkim.adapter.StorageAdapter
+import com.example.jhkim.adapter.ThumbnailAdapter
 import com.example.jhkim.databinding.FragmentStorageBinding
 import com.example.jhkim.viewmodels.StorageViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,17 +35,17 @@ class StorageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val storageAdapter = StorageAdapter {
+        val thumbnailAdapter = ThumbnailAdapter {
             viewModel.onClickButtonLike(it)
         }
         binding.recyclerViewStorage.layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerViewStorage.adapter = storageAdapter
+        binding.recyclerViewStorage.adapter = thumbnailAdapter
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.items.collect {
-                    val preItemCount = storageAdapter.itemCount
-                    storageAdapter.submitList(it)
+                    val preItemCount = thumbnailAdapter.itemCount
+                    thumbnailAdapter.submitList(it)
                     if (preItemCount < it.count()) {
                         binding.recyclerViewStorage.scrollToPosition(0)
                     }

@@ -1,7 +1,5 @@
 package com.example.jhkim.data.entities
 
-import java.util.*
-
 data class Image(
     val collection: String,
     val datetime: String,
