@@ -13,12 +13,12 @@ class ThumbnailRepository @Inject constructor(
 ) {
 
     // api image 데이터 가져오기
-    fun getImageData(text: String, page: Int, result: ((ResponseData<List<Image>>) -> Unit)) {
+    fun getImageData(text: String, page: Int, result: ((Remote<ResponseData<Image>>) -> Unit)) {
         remoteDataSource.getImageData(text, page, result)
     }
 
     // api vclip 데이터 가져오기
-    fun getVclipData(text: String, page: Int, result: ((ResponseData<List<Vclip>>) -> Unit)) {
+    fun getVclipData(text: String, page: Int, result: ((Remote<ResponseData<Vclip>>) -> Unit)) {
         remoteDataSource.getVclipData(text, page, result)
     }
 
@@ -39,7 +39,7 @@ class ThumbnailRepository @Inject constructor(
 
     // 썸네일 is_like 업데이트
     suspend fun updateThumbnailIsLike(thumbnail: Thumbnail) {
-        localDataSource.thumbnailDao().updateThumbnailIsLike(!thumbnail.is_like, Util.getCurrentTime(), thumbnail.id)
+        localDataSource.thumbnailDao().updateThumbnailIsLike(!thumbnail.isLike, Util.getCurrentTime(), thumbnail.id)
     }
 
     // 썸네일 is_like true text 업데이트
@@ -79,12 +79,12 @@ class ThumbnailRepository @Inject constructor(
 
     // 키워드 image 업데이트
     suspend fun updateKeywordImage(keyword: Keyword) {
-        return localDataSource.keywordDao().updateKeywordImage(keyword.image_is_end, keyword.image_page, Util.getCurrentTime(), keyword.text)
+        return localDataSource.keywordDao().updateKeywordImage(keyword.imageIsEnd, keyword.imagePage, Util.getCurrentTime(), keyword.text)
     }
 
     // 키워드 vclip 업데이트
     suspend fun updateKeywordVclip(keyword: Keyword) {
-        return localDataSource.keywordDao().updateKeywordVclip(keyword.vclip_is_end, keyword.vclip_page, Util.getCurrentTime(), keyword.text)
+        return localDataSource.keywordDao().updateKeywordVclip(keyword.vclipIsEnd, keyword.vclipPage, Util.getCurrentTime(), keyword.text)
     }
 
     // 키워드 마지막 검색시간 업데이트

@@ -1,20 +1,18 @@
 package com.example.jhkim.data.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
 
 @Entity
 data class Keyword(
-    var text: String = "",
-    var image_is_end: Boolean = false,
-    var vclip_is_end: Boolean = false,
-    var image_page: Int = 1,
-    var vclip_page: Int = 1,
-    var search_date: Long = Calendar.getInstance().timeInMillis
+    @ColumnInfo(name = "text") var text: String = "",
+    @ColumnInfo(name = "image_is_end") var imageIsEnd: Boolean = false,
+    @ColumnInfo(name = "vclip_is_end") var vclipIsEnd: Boolean = false,
+    @ColumnInfo(name = "image_page") var imagePage: Int = 1,
+    @ColumnInfo(name = "vclip_page") var vclipPage: Int = 1,
+    @ColumnInfo(name = "search_date") var searchDate: Long = Calendar.getInstance().timeInMillis
 ) {
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
 }
-
-

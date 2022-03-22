@@ -31,12 +31,12 @@ class ThumbnailAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(thumbnail: Thumbnail) {
-            binding.imageViewThumbnail.load(thumbnail.thumbnail_url) {
+            binding.imageViewThumbnail.load(thumbnail.thumbnailUrl) {
                 crossfade(true)
             }
 
             binding.textViewDatetime.text = thumbnail.type + " " + thumbnail.datetime.toStringTime()
-            when (thumbnail.is_like) {
+            when (thumbnail.isLike) {
                 true -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_24)
                 false -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_border_24)
             }

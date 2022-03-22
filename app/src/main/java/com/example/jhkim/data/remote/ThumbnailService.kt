@@ -14,13 +14,13 @@ interface ThumbnailService {
         @Query("query") query: String,
         @Query("sort") sort: String,
         @Query("page") page: Int
-    ): Call<ResponseData<List<Image>>>
+    ): Call<ResponseData<Image>>
 
     @GET("v2/search/vclip")
     fun getVclip(
         @Query("query") query: String,
         @Query("sort") sort: String,
         @Query("page") page: Int
-    ): Call<ResponseData<List<Vclip>>>
+    ): Call<ResponseData<Vclip>>
 
 }

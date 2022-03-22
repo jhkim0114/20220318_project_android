@@ -2,9 +2,9 @@ package com.example.jhkim.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jhkim.data.entities.Keyword
-import com.example.jhkim.data.entities.Thumbnail
+import com.example.jhkim.data.entities.*
 import com.example.jhkim.data.repository.ThumbnailRepository
+import com.example.jhkim.util.Util
 import com.example.jhkim.util.Util.toLongTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -19,15 +19,14 @@ class SearchViewModel @Inject constructor(
     private val repository: ThumbnailRepository
 ) : ViewModel() {
 
-    enum class Type {
-        IMAGE,
-        VCLIP
-    }
-
     private val timeout = 1000L * 60L * 5L  // 5분
 //    private val timeout = 1000L * 1L
     private val imageMaxPage = 50
     private val vclipMaxPage = 15
+
+
+    private val _remoteFlow = MutableStateFlow((RemoteFlow()))
+    val remoteFlow: StateFlow<RemoteFlow> = _remoteFlow
 
     private val _items = MutableStateFlow<List<Thumbnail>>(emptyList())
     val items: StateFlow<List<Thumbnail>> = _items
@@ -63,7 +62,7 @@ class SearchViewModel @Inject constructor(
     fun onClickButtonLike(thumbnail: Thumbnail) {
         viewModelScope.launch {
             Timber.d(thumbnail.id.toString())
-            Timber.d(thumbnail.thumbnail_url)
+            Timber.d(thumbnail.thumbnailUrl)
             repository.updateThumbnailIsLike(thumbnail)
         }
     }
@@ -74,7 +73,7 @@ class SearchViewModel @Inject constructor(
         Timber.d("getSearchData isPaging: $isPaging")
 
         when {
-            keyword.value.text != text && !isPaging -> {
+            !isPaging -> {
                 Timber.d("키워드 검색 요청: $text")
                 viewModelScope.launch {
                     dataTimeoutJob()
@@ -129,60 +128,78 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
+    suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
         val addPage = if (isPaging) 1 else 0
-        if (keyword.image_is_end || keyword.image_page + addPage > imageMaxPage) return
-        repository.getImageData(keyword.text, keyword.image_page + addPage) { data ->
-            var thumbnailList: MutableList<Thumbnail> = mutableListOf()
-            data.documents.forEach { image ->
-                Thumbnail(
-                    type = Type.IMAGE.name,
-                    text = keyword.text,
-                    thumbnail_url = image.thumbnail_url,
-                    datetime = image.datetime.toLongTime(),
-                ).also {
-                    thumbnailList.add(it)
-                }
-            }
+        if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) return
+        _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
+        repository.getImageData(keyword.text, keyword.imagePage + addPage) { remote ->
+            when (remote.status) {
+                Remote.Status.SUCCESS -> {
+                    var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                    remote.data?.documents?.forEach { image ->
+                        Thumbnail(
+                            type = Remote.Type.IMAGE.name,
+                            text = keyword.text,
+                            thumbnailUrl = image.thumbnail_url,
+                            datetime = image.datetime.toLongTime(),
+                        ).also {
+                            thumbnailList.add(it)
+                        }
+                    }
 
-            viewModelScope.launch {
-                repository.updateKeywordImage(keyword.copy(
-                    image_page = keyword.image_page + addPage,
-                    image_is_end = data.meta.is_end,
-                ))
-                insertThumbnailList(Type.IMAGE, keyword, addPage, thumbnailList)
+                    viewModelScope.launch {
+                        repository.updateKeywordImage(keyword.copy(
+                            imagePage = keyword.imagePage + addPage,
+                            imageIsEnd = remote.data?.meta!!.is_end,
+                        ))
+                        insertThumbnailList(Remote.Type.IMAGE, keyword, addPage, thumbnailList)
+                        _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
+                    }
+                }
+                Remote.Status.ERROR -> {
+                    _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
+                }
             }
         }
     }
 
-    private suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
+    suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
         val addPage = if (isPaging) 1 else 0
-        if (keyword.vclip_is_end || keyword.vclip_page + addPage > vclipMaxPage) return
-        repository.getVclipData(keyword.text, keyword.vclip_page + addPage) { data ->
-            var thumbnailList: MutableList<Thumbnail> = mutableListOf()
-            data.documents.forEach { vclip ->
-                Thumbnail(
-                    type = Type.VCLIP.name,
-                    text = keyword.text,
-                    thumbnail_url = vclip.thumbnail,
-                    datetime = vclip.datetime.toLongTime(),
-                ).also {
-                    thumbnailList.add(it)
-                }
-            }
+        if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) return
+        _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
+        repository.getVclipData(keyword.text, keyword.vclipPage + addPage) { remote ->
+            when (remote.status) {
+                Remote.Status.SUCCESS -> {
+                    var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                    remote.data?.documents!!.forEach { vclip ->
+                        Thumbnail(
+                            type = Remote.Type.VCLIP.name,
+                            text = keyword.text,
+                            thumbnailUrl = vclip.thumbnail,
+                            datetime = vclip.datetime.toLongTime(),
+                        ).also {
+                            thumbnailList.add(it)
+                        }
+                    }
 
-            viewModelScope.launch {
-                repository.updateKeywordVclip(keyword.copy(
-                    vclip_page = keyword.vclip_page + addPage,
-                    vclip_is_end = data.meta.is_end,
-                ))
-                insertThumbnailList(Type.VCLIP, keyword, addPage, thumbnailList)
+                    viewModelScope.launch {
+                        repository.updateKeywordVclip(keyword.copy(
+                            vclipPage = keyword.vclipPage + addPage,
+                            vclipIsEnd = remote.data?.meta!!.is_end,
+                        ))
+                        insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
+                        _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
+                    }
+                }
+                Remote.Status.ERROR -> {
+                    _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
+                }
             }
         }
     }
 
     private val tempThumbnailList = mutableListOf<Thumbnail>()
-    private suspend fun insertThumbnailList(type: Type, keyword: Keyword, addPage: Int, thumbnailList: MutableList<Thumbnail>) {
+    private suspend fun insertThumbnailList(type: Remote.Type, keyword: Keyword, addPage: Int, thumbnailList: MutableList<Thumbnail>) {
         if (tempThumbnailList.isNotEmpty()) {
             tempThumbnailList.addAll(thumbnailList)
             repository.insertThumbnailList(tempThumbnailList)
@@ -192,14 +209,14 @@ class SearchViewModel @Inject constructor(
 
         tempThumbnailList.addAll(thumbnailList)
         when(type) {
-            Type.IMAGE -> {
-                if (keyword.vclip_is_end || keyword.vclip_page + addPage > vclipMaxPage) {
+            Remote.Type.IMAGE -> {
+                if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
                     repository.insertThumbnailList(tempThumbnailList)
                     tempThumbnailList.clear()
                 }
             }
-            Type.VCLIP -> {
-                if (keyword.image_is_end || keyword.image_page + addPage > imageMaxPage) {
+            Remote.Type.VCLIP -> {
+                if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) {
                     repository.insertThumbnailList(tempThumbnailList)
                     tempThumbnailList.clear()
                 }
