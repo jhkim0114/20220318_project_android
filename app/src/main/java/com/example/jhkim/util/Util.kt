@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import java.text.SimpleDateFormat
 import java.util.*
 

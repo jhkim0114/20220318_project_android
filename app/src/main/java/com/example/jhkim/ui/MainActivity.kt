@@ -2,7 +2,6 @@ package com.example.jhkim.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import com.example.jhkim.adapter.ViewPagerAdapter
 import com.example.jhkim.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -23,6 +22,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        supportActionBar?.hide()
 
         val viewPager = binding.viewPager
         val tabLayout = binding.tabLayout

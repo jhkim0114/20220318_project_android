@@ -48,6 +48,10 @@ class StorageFragment : Fragment() {
                     if (preItemCount < it.count()) {
                         binding.recyclerViewStorage.scrollToPosition(0)
                     }
+                    when {
+                        it.isEmpty() -> binding.textViewStorage.text = "no thumbnail"
+                        it.isNotEmpty() -> binding.textViewStorage.text = ""
+                    }
                 }
             }
         }
