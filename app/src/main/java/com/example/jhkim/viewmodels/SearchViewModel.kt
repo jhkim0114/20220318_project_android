@@ -2,9 +2,11 @@ package com.example.jhkim.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jhkim.data.entities.*
+import com.example.jhkim.data.entities.Keyword
+import com.example.jhkim.data.entities.Remote
+import com.example.jhkim.data.entities.RemoteFlow
+import com.example.jhkim.data.entities.Thumbnail
 import com.example.jhkim.data.repository.ThumbnailRepository
-import com.example.jhkim.util.Util
 import com.example.jhkim.util.Util.toLongTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -44,7 +46,6 @@ class SearchViewModel @Inject constructor(
                 data.forEach { keyword ->
                     idList.add(keyword.id)
                     textList.add(keyword.text)
-                    Timber.d("dataTimeoutJob 타임아웃 삭제 키워드: ${keyword.text}")
                 }
                 repository.deleteKeywordList(idList)
                 repository.deleteThumbnailIsLikeFalseList(textList)
@@ -61,36 +62,23 @@ class SearchViewModel @Inject constructor(
 
     fun onClickButtonLike(thumbnail: Thumbnail) {
         viewModelScope.launch {
-            Timber.d(thumbnail.id.toString())
-            Timber.d(thumbnail.thumbnailUrl)
             repository.updateThumbnailIsLike(thumbnail)
         }
     }
 
     fun getSearchData(text: String = "", isPaging: Boolean = false) {
-        Timber.d("getSearchData input text: $text")
-        Timber.d("getSearchData keyword text: ${keyword.value.text}")
-        Timber.d("getSearchData isPaging: $isPaging")
-
         when {
             !isPaging -> {
-                Timber.d("키워드 검색 요청: $text")
                 viewModelScope.launch {
                     dataTimeoutJob()
 
-                    // 최근 검색인지 확인
                     repository.seleteKeyword(text)?.let {
-                        Timber.d("최근 검색에 저장되어 있음")
-
-                        // 키워드 search_date 업데이트
                         repository.updateKeywordUseDate(it.text)
                     } ?: run {
-                        Timber.d("최근 검색에 저장되어 있지 않음")
-                        // 키워드 데이터 추가
-                        repository.insertKeyword(Keyword(text = text))
+                        repository.insertKeyword(Keyword(text))
                         repository.seleteKeyword(text)?.let {
-                            getImageData(it)
-                            getVclipData(it)
+                            getImageData(keyword = it)
+                            getVclipData(keyword = it)
                         }
                     }
 
@@ -98,7 +86,6 @@ class SearchViewModel @Inject constructor(
                         viewModelScope.launch {
                             repository.seleteFlowKeyword().collect { data ->
                                 data?.let {
-                                    Timber.d("keywordJob 키워드 변경: $data")
                                     keyword.value = data
                                 }
                             }
@@ -109,21 +96,15 @@ class SearchViewModel @Inject constructor(
                     thumbnailJob = viewModelScope.launch {
                         repository.seleteFlowThumbnailList(text).collect { thumbnails ->
                             _items.value = thumbnails
-                            Timber.d("썸네일 flow keyword: $text")
-                            Timber.d("썸네일 flow item count: ${_items.value.size}")
                         }
                     }
                 }
             }
             isPaging -> {
-                Timber.d("다음 페이지 요청: $text")
                 viewModelScope.launch {
-                    getImageData(keyword.value, isPaging)
-                    getVclipData(keyword.value, isPaging)
+                    getImageData(keyword = keyword.value, isPaging = isPaging)
+                    getVclipData(keyword = keyword.value, isPaging = isPaging)
                 }
-            }
-            else -> {
-                return
             }
         }
     }
@@ -132,7 +113,7 @@ class SearchViewModel @Inject constructor(
         val addPage = if (isPaging) 1 else 0
         if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) return
         _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
-        repository.getImageData(keyword.text, keyword.imagePage + addPage) { remote ->
+        repository.getImageData(text = keyword.text, page = keyword.imagePage + addPage) { remote ->
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
                     var thumbnailList: MutableList<Thumbnail> = mutableListOf()
@@ -142,7 +123,7 @@ class SearchViewModel @Inject constructor(
                             text = keyword.text,
                             thumbnailUrl = image.thumbnail_url,
                             datetime = image.datetime.toLongTime(),
-                        ).also {
+                        ).let {
                             thumbnailList.add(it)
                         }
                     }
@@ -167,7 +148,7 @@ class SearchViewModel @Inject constructor(
         val addPage = if (isPaging) 1 else 0
         if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) return
         _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
-        repository.getVclipData(keyword.text, keyword.vclipPage + addPage) { remote ->
+        repository.getVclipData(text = keyword.text, page = keyword.vclipPage + addPage) { remote ->
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
                     var thumbnailList: MutableList<Thumbnail> = mutableListOf()
@@ -177,7 +158,7 @@ class SearchViewModel @Inject constructor(
                             text = keyword.text,
                             thumbnailUrl = vclip.thumbnail,
                             datetime = vclip.datetime.toLongTime(),
-                        ).also {
+                        ).let {
                             thumbnailList.add(it)
                         }
                     }

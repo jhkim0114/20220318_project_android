@@ -4,7 +4,6 @@ import com.example.jhkim.data.entities.Remote
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import timber.log.Timber
 
 abstract class BaseDataSource {
 
@@ -22,13 +21,11 @@ abstract class BaseDataSource {
                     }
                     onFailure(call, Throwable(message = "${response.code()} ${response.message()}"))
                 } catch (e: Exception) {
-                    Timber.d(e.message)
                     onFailure(call, Throwable(message = e.message ?: e.toString()))
                 }
             }
 
             override fun onFailure(call: Call<T>, t: Throwable) {
-                Timber.d(t.message)
                 result(Remote.error("네트워크 호출 실패: ${t.message}"))
             }
         })

@@ -17,10 +17,9 @@ class ViewPagerAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle) :
     }
 
     override fun createFragment(position: Int): Fragment {
-        when (position) {
-            0 -> return SearchFragment()
-            1 -> return StorageFragment()
+        return when (position) {
+            0 -> SearchFragment()
+            else -> StorageFragment()
         }
-        return SearchFragment()
     }
 }

@@ -34,7 +34,6 @@ class ThumbnailAdapter(
             binding.imageViewThumbnail.load(thumbnail.thumbnailUrl) {
                 crossfade(true)
             }
-
             binding.textViewDatetime.text = thumbnail.type + " " + thumbnail.datetime.toStringTime()
             when (thumbnail.isLike) {
                 true -> binding.buttonLike.setImageResource(R.drawable.ic_baseline_favorite_24)

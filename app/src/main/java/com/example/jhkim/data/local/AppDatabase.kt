@@ -9,6 +9,7 @@ import com.example.jhkim.data.entities.Thumbnail
 
 @Database(entities = [Keyword::class, Thumbnail::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
+    
     abstract fun keywordDao(): KeywordDao
     abstract fun thumbnailDao(): ThumbnailDao
 

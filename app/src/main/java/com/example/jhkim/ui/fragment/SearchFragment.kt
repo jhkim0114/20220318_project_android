@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -23,9 +22,9 @@ import com.example.jhkim.data.entities.RemoteFlow
 import com.example.jhkim.databinding.FragmentSearchBinding
 import com.example.jhkim.util.Util
 import com.example.jhkim.viewmodels.SearchViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class SearchFragment : Fragment() {
@@ -52,7 +51,7 @@ class SearchFragment : Fragment() {
         }
 
         val thumbnailAdapter = ThumbnailAdapter {
-            viewModel.onClickButtonLike(it)
+            viewModel.onClickButtonLike(thumbnail = it)
         }
         binding.recyclerViewSearch.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewSearch.adapter = thumbnailAdapter
@@ -98,14 +97,13 @@ class SearchFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.remoteFlow.collect {
-                        Timber.d("remoteFlow status: ${it.status}")
                         when (it.status) {
                             Remote.Status.SUCCESS -> {
                                 binding.progressBarSearch.visibility = View.GONE
                             }
                             Remote.Status.ERROR -> {
                                 binding.progressBarSearch.visibility = View.GONE
-                                remoteRetryAlert(it)
+                                remoteRetryAlert(remoteFlow = it)
                             }
                             Remote.Status.LOADING -> {
                                 binding.progressBarSearch.visibility = View.VISIBLE
@@ -121,7 +119,7 @@ class SearchFragment : Fragment() {
                                 binding.textViewSearch.text = "no thumbnail"
                                 setFragmentResult("mainActivity", bundleOf("key" to "hide"))
                             }
-                            it.isNotEmpty() -> {
+                            else -> {
                                 binding.textViewSearch.text = ""
                                 setFragmentResult("mainActivity", bundleOf("key" to "show"))
                             }
@@ -136,7 +134,7 @@ class SearchFragment : Fragment() {
         when {
             !isPage && binding.editTextSearch.text.toString().isBlank() -> {}
             !Util.checkNetworkState(requireContext()) -> {
-                Toast.makeText(requireContext(), "네트워크에 연결되지 않았습니다.", Toast.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "네트워크에 연결되지 않았습니다.", Snackbar.LENGTH_LONG).show()
             }
             else -> {
                 Util.hideKeyboard(requireActivity())
@@ -152,9 +150,9 @@ class SearchFragment : Fragment() {
             .setPositiveButton("재시도") { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     if (remoteFlow.type == Remote.Type.IMAGE) {
-                        viewModel.getImageData(remoteFlow.keyword, remoteFlow.isPage)
+                        viewModel.getImageData(keyword = remoteFlow.keyword, isPaging = remoteFlow.isPage)
                     } else {
-                        viewModel.getVclipData(remoteFlow.keyword, remoteFlow.isPage)
+                        viewModel.getVclipData(keyword = remoteFlow.keyword, isPaging = remoteFlow.isPage)
                     }
                 }
             }

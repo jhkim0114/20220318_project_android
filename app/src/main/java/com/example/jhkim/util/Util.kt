@@ -1,5 +1,6 @@
 package com.example.jhkim.util
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.net.ConnectivityManager

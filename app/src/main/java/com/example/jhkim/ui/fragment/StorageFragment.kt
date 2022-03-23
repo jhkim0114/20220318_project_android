@@ -50,7 +50,7 @@ class StorageFragment : Fragment() {
                     }
                     when {
                         it.isEmpty() -> binding.textViewStorage.text = "no thumbnail"
-                        it.isNotEmpty() -> binding.textViewStorage.text = ""
+                        else -> binding.textViewStorage.text = ""
                     }
                 }
             }

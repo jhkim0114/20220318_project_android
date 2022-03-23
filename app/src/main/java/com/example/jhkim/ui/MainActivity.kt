@@ -1,7 +1,6 @@
 package com.example.jhkim.ui
 
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.viewpager2.widget.ViewPager2
@@ -9,7 +8,6 @@ import com.example.jhkim.adapter.ViewPagerAdapter
 import com.example.jhkim.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
