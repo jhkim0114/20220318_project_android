@@ -208,7 +208,7 @@ class SearchViewModel @Inject constructor(
         }
 
         tempThumbnailList.addAll(thumbnailList)
-        when(type) {
+        when (type) {
             Remote.Type.IMAGE -> {
                 if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
                     repository.insertThumbnailList(tempThumbnailList)

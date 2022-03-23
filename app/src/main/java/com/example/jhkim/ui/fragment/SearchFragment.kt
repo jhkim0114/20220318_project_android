@@ -7,7 +7,10 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -42,6 +45,12 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setFragmentResultListener("searchFragment") { _, bundle ->
+            bundle.getString("key")?.let {
+                binding.recyclerViewSearch.smoothScrollToPosition(0)
+            }
+        }
+
         val thumbnailAdapter = ThumbnailAdapter {
             viewModel.onClickButtonLike(it)
         }
@@ -54,7 +63,6 @@ class SearchFragment : Fragment() {
 
                 val itemCount = recyclerView.adapter?.itemCount!!
                 val lastVisibleItemPosition = (recyclerView.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
-                Timber.d("itemCount: $itemCount lastVisibleItemPosition: $lastVisibleItemPosition")
 
                 if (viewModel.items.value.size > 80 && (itemCount - lastVisibleItemPosition+1) < 80) {
                     if (preItemCount != itemCount) {
@@ -109,8 +117,14 @@ class SearchFragment : Fragment() {
                     viewModel.items.collect {
                         thumbnailAdapter.submitList(it)
                         when {
-                            it.isEmpty() -> binding.textViewSearch.text = "no thumbnail"
-                            it.isNotEmpty() -> binding.textViewSearch.text = ""
+                            it.isEmpty() -> {
+                                binding.textViewSearch.text = "no thumbnail"
+                                setFragmentResult("mainActivity", bundleOf("key" to "hide"))
+                            }
+                            it.isNotEmpty() -> {
+                                binding.textViewSearch.text = ""
+                                setFragmentResult("mainActivity", bundleOf("key" to "show"))
+                            }
                         }
                     }
                 }
