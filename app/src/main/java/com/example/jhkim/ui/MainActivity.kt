@@ -3,7 +3,6 @@ package com.example.jhkim.ui
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
-import androidx.viewpager2.widget.ViewPager2
 import com.example.jhkim.adapter.ViewPagerAdapter
 import com.example.jhkim.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -34,29 +33,11 @@ class MainActivity : AppCompatActivity() {
             tab.text = tabTitleArray[position]
         }.attach()
 
+        // 리스트 스크롤 탑 이동 이벤트
         binding.floatingActionButton.setOnClickListener {
             when (viewPager.currentItem) {
                 0 -> supportFragmentManager.setFragmentResult("searchFragment", bundleOf("key" to "action"))
                 1 -> supportFragmentManager.setFragmentResult("storageFragment", bundleOf("key" to "action"))
-            }
-        }
-
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-                when (position) {
-                    0 -> binding.floatingActionButton.show()
-                    1 -> binding.floatingActionButton.hide()
-                }
-            }
-        })
-
-        supportFragmentManager.setFragmentResultListener("mainActivity", this) { _, bundle ->
-            bundle.getString("key")?.let {
-                when (it) {
-                    "show" -> binding.floatingActionButton.show()
-                    "hide" -> binding.floatingActionButton.hide()
-                }
             }
         }
     }

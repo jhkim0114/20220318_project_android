@@ -16,8 +16,10 @@ abstract class BaseDataSource {
                 try {
                     if (response.isSuccessful) {
                         val body = response.body()
-                        if (body != null) result(Remote.success(body))
-                        return
+                        if (body != null) {
+                            result(Remote.success(body))
+                            return
+                        }
                     }
                     onFailure(call, Throwable(message = "${response.code()} ${response.message()}"))
                 } catch (e: Exception) {

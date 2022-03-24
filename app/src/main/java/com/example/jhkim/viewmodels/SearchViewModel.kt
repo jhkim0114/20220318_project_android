@@ -13,7 +13,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,10 +21,8 @@ class SearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val timeout = 1000L * 60L * 5L  // 5분
-//    private val timeout = 1000L * 1L
     private val imageMaxPage = 50
     private val vclipMaxPage = 15
-
 
     private val _remoteFlow = MutableStateFlow((RemoteFlow()))
     val remoteFlow: StateFlow<RemoteFlow> = _remoteFlow
@@ -38,8 +35,10 @@ class SearchViewModel @Inject constructor(
     private var thumbnailJob: Job? = null
     private var keywordJob: Job? = null
 
+    // 5분 지난 데이터 삭제
     private val dataTimeoutJob by lazy {
         suspend {
+            // 5분 지난 키워드 조회
             repository.seleteKeywordTimeoutList(timeout).let { data ->
                 val idList = mutableListOf<Long>()
                 val textList = mutableListOf<String>()
@@ -47,8 +46,11 @@ class SearchViewModel @Inject constructor(
                     idList.add(keyword.id)
                     textList.add(keyword.text)
                 }
+                // 키워드 리스트 삭제
                 repository.deleteKeywordList(idList)
+                // 썸네일 좋아요 아닌 데이터 삭제
                 repository.deleteThumbnailIsLikeFalseList(textList)
+                // 썸네일 좋아요인 데이터 text 정보 업데이트 (검색되지 않도록 처리)
                 repository.updateThumbnailITextIsLikeTrue("", textList)
             }
         }
@@ -60,21 +62,27 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    // 좋아요 버튼 이벤트
     fun onClickButtonLike(thumbnail: Thumbnail) {
         viewModelScope.launch {
             repository.updateThumbnailIsLike(thumbnail)
         }
     }
 
+    // 썸네일 데이터 요청
     fun getSearchData(text: String = "", isPaging: Boolean = false) {
         when {
+            // 버튼 호출
             !isPaging -> {
                 viewModelScope.launch {
                     dataTimeoutJob()
 
+                    // 5분 내에 검색 되었는지 키워드 조회
                     repository.seleteKeyword(text)?.let {
+                        // 있으면 검색시간 업데이트
                         repository.updateKeywordUseDate(it.text)
                     } ?: run {
+                        // 없으면 키워드 테이블 insert, remote api 요청
                         repository.insertKeyword(Keyword(text))
                         repository.seleteKeyword(text)?.let {
                             getImageData(keyword = it)
@@ -82,6 +90,7 @@ class SearchViewModel @Inject constructor(
                         }
                     }
 
+                    // 검색 키워드 데이터 조회
                     keywordJob = keywordJob ?: run {
                         viewModelScope.launch {
                             repository.seleteFlowKeyword().collect { data ->
@@ -92,6 +101,7 @@ class SearchViewModel @Inject constructor(
                         }
                     }
 
+                    // 검색 썸네일 리스트 조회
                     thumbnailJob?.cancel()
                     thumbnailJob = viewModelScope.launch {
                         repository.seleteFlowThumbnailList(text).collect { thumbnails ->
@@ -100,7 +110,9 @@ class SearchViewModel @Inject constructor(
                     }
                 }
             }
+            // 페이징 호출
             isPaging -> {
+                // remote api 요청
                 viewModelScope.launch {
                     getImageData(keyword = keyword.value, isPaging = isPaging)
                     getVclipData(keyword = keyword.value, isPaging = isPaging)
@@ -109,8 +121,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    // remote api - 이미지 데이터 요청
     suspend fun getImageData(keyword: Keyword, isPaging: Boolean = false) {
         val addPage = if (isPaging) 1 else 0
+        // 다음 페이지가 없거나 최대 페이지보다 클 경우 리턴
         if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) return
         _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
         repository.getImageData(text = keyword.text, page = keyword.imagePage + addPage) { remote ->
@@ -128,11 +142,13 @@ class SearchViewModel @Inject constructor(
                         }
                     }
 
+                    // 키워드 정보 업데이트
                     viewModelScope.launch {
                         repository.updateKeywordImage(keyword.copy(
                             imagePage = keyword.imagePage + addPage,
                             imageIsEnd = remote.data?.meta!!.is_end,
                         ))
+                        // 썸네일 로컬 테이블 저장
                         insertThumbnailList(Remote.Type.IMAGE, keyword, addPage, thumbnailList)
                         _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                     }
@@ -144,8 +160,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    // remote api - 동영상 데이터 요청
     suspend fun getVclipData(keyword: Keyword, isPaging: Boolean = false) {
         val addPage = if (isPaging) 1 else 0
+        // 다음 페이지가 없거나 최대 페이지보다 클 경우 리턴
         if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) return
         _remoteFlow.value = RemoteFlow(status = Remote.Status.LOADING)
         repository.getVclipData(text = keyword.text, page = keyword.vclipPage + addPage) { remote ->
@@ -163,11 +181,13 @@ class SearchViewModel @Inject constructor(
                         }
                     }
 
+                    // 키워드 정보 업데이트
                     viewModelScope.launch {
                         repository.updateKeywordVclip(keyword.copy(
                             vclipPage = keyword.vclipPage + addPage,
                             vclipIsEnd = remote.data?.meta!!.is_end,
                         ))
+                        // 썸네일 로컬 테이블 저장
                         insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
                         _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                     }
@@ -179,8 +199,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    // 썸네일 로컬 테이블 저장
     private val tempThumbnailList = mutableListOf<Thumbnail>()
     private suspend fun insertThumbnailList(type: Remote.Type, keyword: Keyword, addPage: Int, thumbnailList: MutableList<Thumbnail>) {
+        // 두번째 호출 데이터인 경우 로컬 데이터 저장
         if (tempThumbnailList.isNotEmpty()) {
             tempThumbnailList.addAll(thumbnailList)
             repository.insertThumbnailList(tempThumbnailList)
@@ -189,6 +211,7 @@ class SearchViewModel @Inject constructor(
         }
 
         tempThumbnailList.addAll(thumbnailList)
+        // 첫번째 호출 데이터만 요청 가능한 경우 로컬 데이터 저장
         when (type) {
             Remote.Type.IMAGE -> {
                 if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
