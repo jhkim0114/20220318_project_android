@@ -130,26 +130,30 @@ class SearchViewModel @Inject constructor(
         repository.getImageData(text = keyword.text, page = keyword.imagePage + addPage) { remote ->
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
-                    var thumbnailList: MutableList<Thumbnail> = mutableListOf()
-                    remote.data?.documents?.forEach { image ->
-                        Thumbnail(
-                            type = Remote.Type.IMAGE.name,
-                            text = keyword.text,
-                            thumbnailUrl = image.thumbnail_url,
-                            datetime = image.datetime.toLongTime(),
-                        ).let {
-                            thumbnailList.add(it)
+                    try {
+                        var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                        remote.data?.documents?.forEach { image ->
+                            Thumbnail(
+                                type = Remote.Type.IMAGE.name,
+                                text = keyword.text,
+                                thumbnailUrl = image.thumbnail_url,
+                                datetime = image.datetime.toLongTime(),
+                            ).let {
+                                thumbnailList.add(it)
+                            }
                         }
-                    }
 
-                    // 키워드 정보 업데이트
-                    viewModelScope.launch {
-                        repository.updateKeywordImage(keyword.copy(
-                            imagePage = keyword.imagePage + addPage,
-                            imageIsEnd = remote.data?.meta!!.is_end,
-                        ))
-                        // 썸네일 로컬 테이블 저장
-                        insertThumbnailList(Remote.Type.IMAGE, keyword, addPage, thumbnailList)
+                        // 키워드 정보 업데이트
+                        viewModelScope.launch {
+                            repository.updateKeywordImage(keyword.copy(
+                                imagePage = keyword.imagePage + addPage,
+                                imageIsEnd = remote.data?.meta!!.is_end,
+                            ))
+                            // 썸네일 로컬 테이블 저장
+                            insertThumbnailList(Remote.Type.IMAGE, keyword, addPage, thumbnailList)
+                        }
+                    } catch (e: Exception) {
+                        _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
                     }
                 }
                 Remote.Status.ERROR -> {
@@ -168,26 +172,30 @@ class SearchViewModel @Inject constructor(
         repository.getVclipData(text = keyword.text, page = keyword.vclipPage + addPage) { remote ->
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
-                    var thumbnailList: MutableList<Thumbnail> = mutableListOf()
-                    remote.data?.documents!!.forEach { vclip ->
-                        Thumbnail(
-                            type = Remote.Type.VCLIP.name,
-                            text = keyword.text,
-                            thumbnailUrl = vclip.thumbnail,
-                            datetime = vclip.datetime.toLongTime(),
-                        ).let {
-                            thumbnailList.add(it)
+                    try {
+                        var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                        remote.data?.documents!!.forEach { vclip ->
+                            Thumbnail(
+                                type = Remote.Type.VCLIP.name,
+                                text = keyword.text,
+                                thumbnailUrl = vclip.thumbnail,
+                                datetime = vclip.datetime.toLongTime(),
+                            ).let {
+                                thumbnailList.add(it)
+                            }
                         }
-                    }
 
-                    // 키워드 정보 업데이트
-                    viewModelScope.launch {
-                        repository.updateKeywordVclip(keyword.copy(
-                            vclipPage = keyword.vclipPage + addPage,
-                            vclipIsEnd = remote.data?.meta!!.is_end,
-                        ))
-                        // 썸네일 로컬 테이블 저장
-                        insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
+                        // 키워드 정보 업데이트
+                        viewModelScope.launch {
+                            repository.updateKeywordVclip(keyword.copy(
+                                vclipPage = keyword.vclipPage + addPage,
+                                vclipIsEnd = remote.data?.meta!!.is_end,
+                            ))
+                            // 썸네일 로컬 테이블 저장
+                            insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
+                        }
+                    } catch (e: Exception) {
+                        _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
                     }
                 }
                 Remote.Status.ERROR -> {
