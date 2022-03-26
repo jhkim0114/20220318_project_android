@@ -38,7 +38,7 @@ class StorageFragment : Fragment() {
         // 리스트 스크롤 탑 이동 리스너
         setFragmentResultListener("storageFragment") { _, bundle ->
             bundle.getString("key")?.let {
-                binding.recyclerViewStorage.smoothScrollToPosition(0)
+                if (it == "action") binding.recyclerViewStorage.smoothScrollToPosition(0)
             }
         }
 

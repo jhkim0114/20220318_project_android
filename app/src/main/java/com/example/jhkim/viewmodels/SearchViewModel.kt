@@ -150,7 +150,6 @@ class SearchViewModel @Inject constructor(
                         ))
                         // 썸네일 로컬 테이블 저장
                         insertThumbnailList(Remote.Type.IMAGE, keyword, addPage, thumbnailList)
-                        _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                     }
                 }
                 Remote.Status.ERROR -> {
@@ -189,7 +188,6 @@ class SearchViewModel @Inject constructor(
                         ))
                         // 썸네일 로컬 테이블 저장
                         insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
-                        _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                     }
                 }
                 Remote.Status.ERROR -> {
@@ -207,6 +205,7 @@ class SearchViewModel @Inject constructor(
             tempThumbnailList.addAll(thumbnailList)
             repository.insertThumbnailList(tempThumbnailList)
             tempThumbnailList.clear()
+            _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
             return
         }
 
@@ -217,12 +216,14 @@ class SearchViewModel @Inject constructor(
                 if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
                     repository.insertThumbnailList(tempThumbnailList)
                     tempThumbnailList.clear()
+                    _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                 }
             }
             Remote.Type.VCLIP -> {
                 if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) {
                     repository.insertThumbnailList(tempThumbnailList)
                     tempThumbnailList.clear()
+                    _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
                 }
             }
         }
