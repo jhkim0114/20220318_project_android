@@ -211,9 +211,7 @@ class SearchViewModel @Inject constructor(
         // 두번째 호출 데이터인 경우 로컬 데이터 저장
         if (tempThumbnailList.isNotEmpty()) {
             tempThumbnailList.addAll(thumbnailList)
-            repository.insertThumbnailList(tempThumbnailList)
-            tempThumbnailList.clear()
-            _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
+            insertThumbnailList()
             return
         }
 
@@ -222,19 +220,21 @@ class SearchViewModel @Inject constructor(
         when (type) {
             Remote.Type.IMAGE -> {
                 if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
-                    repository.insertThumbnailList(tempThumbnailList)
-                    tempThumbnailList.clear()
-                    _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
+                    insertThumbnailList()
                 }
             }
             Remote.Type.VCLIP -> {
                 if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) {
-                    repository.insertThumbnailList(tempThumbnailList)
-                    tempThumbnailList.clear()
-                    _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
+                    insertThumbnailList()
                 }
             }
         }
+    }
+
+    private suspend fun insertThumbnailList() {
+        repository.insertThumbnailList(tempThumbnailList)
+        tempThumbnailList.clear()
+        _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
     }
 
 }
