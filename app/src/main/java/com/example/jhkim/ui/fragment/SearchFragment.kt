@@ -123,6 +123,10 @@ class SearchFragment : Fragment() {
                     // 썸네일 리스트 조회
                     viewModel.items.collect {
                         thumbnailAdapter.submitList(it)
+                        when {
+                            it.isEmpty() -> binding.textViewSearch.text = "no thumbnail"
+                            else -> binding.textViewSearch.text = ""
+                        }
                     }
                 }
             }
