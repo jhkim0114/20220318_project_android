@@ -210,27 +210,23 @@ class SearchViewModel @Inject constructor(
     var imageType = false
     var vclipType = false
     private suspend fun insertThumbnailList(type: Remote.Type, keyword: Keyword, addPage: Int, thumbnailList: MutableList<Thumbnail>) {
-        // 두번째 호출 데이터인 경우 로컬 데이터 저장
-        if (imageType || vclipType) {
-            if (thumbnailList.isNotEmpty()) {
-                tempThumbnailList.addAll(thumbnailList)
-            }
-            insertThumbnailList()
-            return
-        }
-
         if (thumbnailList.isNotEmpty()) {
             tempThumbnailList.addAll(thumbnailList)
         }
-        // 첫번째 호출 데이터만 요청 가능한 경우 로컬 데이터 저장
-        when (type) {
-            Remote.Type.IMAGE -> {
+
+        when {
+            // 두번째 호출 데이터인 경우 로컬 데이터 저장
+            imageType || vclipType -> {
+                insertThumbnailList()
+            }
+            // 첫번째 호출 데이터만 요청 가능한 경우 로컬 데이터 저장
+            type == Remote.Type.IMAGE -> {
                 imageType = true
                 if (keyword.vclipIsEnd || keyword.vclipPage + addPage > vclipMaxPage) {
                     insertThumbnailList()
                 }
             }
-            Remote.Type.VCLIP -> {
+            type == Remote.Type.VCLIP -> {
                 vclipType = true
                 if (keyword.imageIsEnd || keyword.imagePage + addPage > imageMaxPage) {
                     insertThumbnailList()
