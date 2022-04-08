@@ -245,5 +245,16 @@ class SearchViewModel @Inject constructor(
         _remoteFlow.value = RemoteFlow(status = Remote.Status.SUCCESS)
     }
 
+//    private fun jsonTest() {
+//        val type = object : TypeToken<ResponseData<Image>>() {}.type
+//        val jsonResult = Gson().toJson(remote.body())
+//        var data: ResponseData<Image>? = null
+//        try {
+//            data = Gson().fromJson(jsonResult, type)
+//        } catch (e: java.lang.Exception) {
+//
+//        }
+//    }
+
 }
 
