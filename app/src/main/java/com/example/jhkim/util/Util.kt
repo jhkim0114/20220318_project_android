@@ -15,7 +15,7 @@ object Util {
     fun String.toLongTime(): Long {
         val datetime = this.substring(0, 10) + " " + this.substring(11, 19)
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        return format.parse(datetime).time
+        return format.parse(datetime)?.time ?: 0
     }
 
     // Long -> String 시간으로 변환
