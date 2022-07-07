@@ -131,7 +131,7 @@ class SearchViewModel @Inject constructor(
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
                     try {
-                        var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                        val thumbnailList: MutableList<Thumbnail> = mutableListOf()
                         remote.data?.documents?.forEach { image ->
                             Thumbnail(
                                 type = Remote.Type.IMAGE.name,
@@ -159,6 +159,7 @@ class SearchViewModel @Inject constructor(
                 Remote.Status.ERROR -> {
                     _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
                 }
+                else -> {}
             }
         }
     }
@@ -173,7 +174,7 @@ class SearchViewModel @Inject constructor(
             when (remote.status) {
                 Remote.Status.SUCCESS -> {
                     try {
-                        var thumbnailList: MutableList<Thumbnail> = mutableListOf()
+                        val thumbnailList: MutableList<Thumbnail> = mutableListOf()
                         remote.data?.documents!!.forEach { vclip ->
                             Thumbnail(
                                 type = Remote.Type.VCLIP.name,
@@ -189,7 +190,7 @@ class SearchViewModel @Inject constructor(
                         viewModelScope.launch {
                             repository.updateKeywordVclip(keyword.copy(
                                 vclipPage = keyword.vclipPage + addPage,
-                                vclipIsEnd = remote.data?.meta!!.is_end,
+                                vclipIsEnd = remote.data.meta.is_end,
                             ))
                             // 썸네일 로컬 테이블 저장
                             insertThumbnailList(Remote.Type.VCLIP, keyword, addPage, thumbnailList)
@@ -201,6 +202,7 @@ class SearchViewModel @Inject constructor(
                 Remote.Status.ERROR -> {
                     _remoteFlow.value = RemoteFlow(status = Remote.Status.ERROR, keyword = keyword, isPage = isPaging)
                 }
+                else -> {}
             }
         }
     }
